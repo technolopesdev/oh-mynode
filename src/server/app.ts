@@ -3,6 +3,8 @@ import mongoose from 'mongoose';
 import dotenv from 'dotenv';
 import morgan from 'morgan';
 import cors from 'cors';
+import path from 'path';
+import fs from 'fs/promises';
 
 dotenv.config();
 
@@ -23,8 +25,16 @@ class App {
         const url = process.env.MONGO_URL as string;
         mongoose.connect(url);
     }
-    private routes(): void {
-        //
+    private async routes(): Promise<void> {
+        const allRoutes = await fs.readdir(path.resolve(__dirname, '..', 'routes'));
+        allRoutes.forEach(value => {
+            const fname = value.split('.')[0];
+            if (fname === 'root') {
+                this.app.use('/', require('../routes/user').default);
+            } else {
+                this.app.use(`/${fname}`, require(`../routes/${fname}`).default);
+            }
+        });
     }
 }
 
